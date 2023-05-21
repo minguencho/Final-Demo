@@ -142,7 +142,7 @@ def get_results(email, search, keyword):
 def delete_all(email):
     db['Results'].delete_many({'email': email})
 
-##path
+## For PATH
 
 #insert DB
 def insert_nodes(msg):
@@ -162,6 +162,15 @@ def insert_missionfile(mission_file):
     return True
 
 #get DB
+
+def get_service_nodes():
+    SV_nodes = []
+    cursor = db['paths'].find({})
+    for document in cursor:
+        node = document['Dst coordinate']
+        SV_nodes.append(node)
+    return SV_nodes
+
 
 def get_nodes(name):
     dst_node = db['paths'].find_one({'name' : name})['Dst coordinate']

@@ -12,21 +12,23 @@ router = APIRouter(
 
 templates = Jinja2Templates(directory="frontend")
 
-BC = {'lat' : 35.154233248776904,'lng':128.09317879693032}
-
+#BC = {'lat' : 35.154233248776904,'lng':128.09317879693032}
+BC = [35.154233248776904,128.09317879693032]
 Dstcoordinate = [35.153299,128.102089]
+
+SV_nodes = database.get_service_nodes()
 
 global name
 
-def bs_dst_distance(BC,Dst):
+def bs_dst_distance(coord1,coord2):
     # 지구 반경 (km)
     R = 6373.0
 
     # 위도, 경도를 라디안으로 변환
-    lat1 = radians(BC['lat'])
-    lon1 = radians(BC['lng'])
-    lat2 = radians(Dst['lat'])
-    lon2 = radians(Dst['lng'])
+    lat1 = radians(coord1[0])
+    lon1 = radians(coord1[1])
+    lat2 = radians(coord2[0])
+    lon2 = radians(coord2[1])
 
     # 경도, 위도 차이 계산
     dlon = lon2 - lon1
@@ -41,25 +43,41 @@ def bs_dst_distance(BC,Dst):
 
     return distance
 
+#사용자가 지정한 도착지와 가장 가까운 노드 찾기
+def find_closeset_coordinate(Dst, SV_nodes):
+    closeset_coord = None
+    min_distance = float('inf')
+    for coord in SV_nodes:
+        distance = bs_dst_distance(Dst,coord)
+        if distance < min_distance:
+            min_distance = distance
+            closeset_coord = coord
+    return closeset_coord
+
+
 @router.get("/")
 async def map_page(request : Request):
-    service_able_waypoint = database.get_service_waypoint()
-    context = {'request' : request, 'lat' : BC['lat'], 'lng' : BC['lng'], 'service_able_waypoint' : service_able_waypoint}
+    service_able_waypoint = database.get_service_nodes()
+    context = {'request' : request, 'lat' : BC[0], 'lng' : BC[1], 'service_able_waypoint' : service_able_waypoint}
     return templates.TemplateResponse("/map.html",context)
 
 
 @router.post("/")
 async def fetch_dst(request: Request):
     global name
-
-    Dst = await request.json()
+    Dst = await request.json() #사용자가 선택한 도착점
     print(f"Destination longitude={Dst['lng']}, latitude={Dst['lat']}")
+    Dst=[Dst['lat'],Dst['lng']]
+
     distance = bs_dst_distance(BC,Dst)
     print("BC-Dst distance is",distance,"km")
+
     print("assigned drone is ", database.drone_select(distance))
     name = database.drone_select(distance)
-    print(Dst)
-    routes = database.get_traj(Dstcoordinate)
+
+    find_closeset_coordinate(Dst,SV_nodes)
+    routes = database.get_traj(find_closeset_coordinate(Dst,SV_nodes))
+    print(routes)
     return {"success": True, "routes" : routes}
 
 
