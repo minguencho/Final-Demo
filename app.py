@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from smartQ.routers import authentication, user, device, model, inference, search, menu, group
+from smartQ.routers import map, authentication, user, device, model, inference, search, menu, group
 
 
 app = FastAPI()
@@ -14,4 +14,5 @@ app.include_router(inference.router)
 app.include_router(search.router)
 app.include_router(menu.router)
 app.include_router(group.router)
+app.include_router(map.router)
 
