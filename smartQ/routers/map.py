@@ -15,10 +15,11 @@ templates = Jinja2Templates(directory="frontend")
 #BC = {'lat' : 35.154233248776904,'lng':128.09317879693032}
 BC = [35.154233248776904,128.09317879693032]
 Dstcoordinate = [35.153299,128.102089]
-
 SV_nodes = database.get_service_nodes()
 
+
 global name
+global Dst
 
 def bs_dst_distance(coord1,coord2):
     # 지구 반경 (km)
@@ -64,34 +65,32 @@ async def map_page(request : Request):
 
 @router.post("/")
 async def fetch_dst(request: Request):
-    global name
+    global name, Dst
     Dst = await request.json() #사용자가 선택한 도착점
     print(f"Destination longitude={Dst['lng']}, latitude={Dst['lat']}")
     Dst=[Dst['lat'],Dst['lng']]
-
     distance = bs_dst_distance(BC,Dst)
     print("BC-Dst distance is",distance,"km")
 
     print("assigned drone is ", database.drone_select(distance))
     name = database.drone_select(distance)
-
-    find_closeset_coordinate(Dst,SV_nodes)
-    routes = database.get_traj(find_closeset_coordinate(Dst,SV_nodes))
-    print(routes)
+    Dst = find_closeset_coordinate(Dst,SV_nodes)
+    routes = database.get_traj(Dst)
     return {"success": True, "routes" : routes}
 
 
 @router.post("/generate_MF")
 async def generate_MF():
-    global name
-    Dstcoordinate = [35.153299,128.102089]
+    global name , Dst
     """mission_generator = Mission_Generator()
     mission_splitter = Misssion_Splitter()
     task_publisher = Task_Publisher()"""
-    routes = database.get_traj(Dstcoordinate)
+    print(Dst)
+    routes = database.get_traj(Dst)
+    print(routes)
     drone_name = name
-    altitude = database.get_altitude(Dstcoordinate)
-    Dstcoordinate = database.get_altitude(Dstcoordinate)
+    altitude = database.get_altitude(Dst)
+    Dst = database.get_Dstcoordinate(Dst)
     receiver_info = database.get_receiver_info('111')
     pre_inference_model = b'onnx' 
     mission_file = {}
@@ -99,7 +98,7 @@ async def generate_MF():
         routes=routes,
         drone_name=drone_name,
         altitude=altitude,
-        Dstcoordinate=Dstcoordinate,
+        Dstcoordinate=Dst,
         receiver_info=receiver_info,
         pre_inference_model=pre_inference_model)  
     print(mission_file)

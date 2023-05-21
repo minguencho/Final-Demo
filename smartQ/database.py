@@ -214,14 +214,15 @@ def get_traj(Dstcoordinate):
 
     return route
 
-def get_altitude(Dstcoordinate):
+def get_Dstcoordinate(Dstcoordinate):
     document = db['paths'].find_one({'Dst coordinate': Dstcoordinate})
     Dstcoordinate = document['Dst coordinate']
     return Dstcoordinate
 
-def get_Dstcoordinate(path_name):
-    document = db['paths'].find_one({'path': path_name})
+def get_altitude(Dstcoordinate):
+    document = db['paths'].find_one({'Dst coordinate': Dstcoordinate})
     altitude = document['altitude']
+    print(altitude)
     return altitude
 
 #drone select
