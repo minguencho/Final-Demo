@@ -14,7 +14,6 @@ templates = Jinja2Templates(directory="frontend")
 
 #BC = {'lat' : 35.154233248776904,'lng':128.09317879693032}
 BC = [35.154233248776904,128.09317879693032]
-Dstcoordinate = [35.153299,128.102089]
 SV_nodes = database.get_service_nodes()
 
 
