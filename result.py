@@ -1,4 +1,4 @@
-from smartQ.rabbitmq import Result_Saver
+from capstone.rabbitmq import Result_Saver
 
 Mongo = Result_Saver()
 

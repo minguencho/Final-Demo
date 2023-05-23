@@ -1,7 +1,7 @@
 import pika
 import pickle
 
-from smartQ import database
+from capstone import database
 
 RABBITMQ_SERVER_IP = '203.255.57.129'
 RABBITMQ_SERVER_PORT = '5672'

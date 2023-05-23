@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
-from smartQ import schemas, hashing, database, rabbitmq
+from capstone import schemas, hashing, database, rabbitmq
 
 router = APIRouter(tags=['login'])
 
@@ -36,14 +36,3 @@ async def create_user(request: Request):
     except:
         errors.append("Something Wrong")
         return templates.TemplateResponse("signup.html", {"request": request, "errors": errors})
-
-
-"""
-@router.get('/get/{email}')
-def get_user(email: str):
-    user = database.find_user(email)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with the id ? is not available")
-    
-    return user
-"""

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Response, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from smartQ import token, database
-from smartQ.hashing import Hash
+from capstone import token, database
+from capstone.hashing import Hash
 
 router = APIRouter(tags=['Authentication'])
 
@@ -19,7 +19,6 @@ async def login(request: Request, response: Response):
     form = await request.form()
     user_email = form.get("user_email")
     password = form.get("password")
-    
     errors = []
     if not user_email:
         errors.append("Please Enter Email")

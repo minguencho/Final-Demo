@@ -1,5 +1,5 @@
 from pymongo.mongo_client import MongoClient
-from smartQ import database
+from capstone import database
 # DB 연결
 uri = "mongodb+srv://cho000130:cho41455@capstone.ajviw1n.mongodb.net/"
 
