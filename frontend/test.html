@@ -243,8 +243,15 @@
     })
     .catch(error => console.error(error));
     console.log("successfully created MF file and saved it to DB.");
+    deliver_start();
     setInterval(get_gps, 3000) // 3초에 한번씩 GPS 최신화
+    deliver_();
   });
+
+  function check_delivery(distance){
+    
+
+  }
 
   function showDestinationMessage() {
     var chatbox = document.getElementById("chatbox");
@@ -255,6 +262,16 @@
   function deliver_start() {
     var chatbox = document.getElementById("chatbox");
     chatbox.innerHTML += "<p>2. 배송이 시작되었습니다.</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+  function delivering() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>3.배송 중 입니다.</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+  function deliver_complete() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>3.배송 완료되었습니다.</p>";
     chatbox.scrollTop = chatbox.scrollHeight;
   }
 
@@ -389,6 +406,7 @@
         properties: {}
       });
     });
+
   }
 
   map.on('load', function() {

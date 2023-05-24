@@ -42,7 +42,7 @@ class Mission_Generator():
 
         return
     
-    def make_mission(routes, user_email, drone_name, altitude, Dstcoordinate, receiver_info, pre_inference_model):
+    def make_mission(self, routes, user_email, drone_name, altitude, Dstcoordinate, receiver_info, pre_inference_model):
         mission_file = {
             'user_email': user_email,
             'name': drone_name,
