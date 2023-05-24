@@ -31,20 +31,17 @@ def make_exchange(exchange_name):
     return True
 
 
-# not yet
-def get_device_name(email):
-    exchange_name = email
-    queues = []
-    print('hi')
-    try:
-        for queue in channel.get_bindings(exchange=exchange_name):
-            queues.append(queue['queue'])
-    except:
-        print('false')
-        return False
-            
-    print(queues)
-    return queues
+# drone_stop
+def rm_queue_message(queue_name):
+    while True:
+        method_frame,_,body = channel.basic_get(queue=queue_name, auto_ack=True)
+        if method_frame:
+            print('Delete message : ', body)
+        else:
+            break
+
+
+
 
 
 class Result_Saver():

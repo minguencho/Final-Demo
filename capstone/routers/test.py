@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from Mission_Generator import Mission_Generator
-from capstone import database,utils
+from capstone import database, utils, rabbitmq, token
 
 router = APIRouter(
     prefix="/test",
@@ -45,8 +45,14 @@ async def generate_MF(request: Request):
     Dst = data.get('Dst')
     drone_name = data.get('drone_name')
     
+    scheme,_,access_token = request.cookies.get("access_token").partition(" ")
+    if access_token is None:
+        print("You have to Login first")
+        return 
+    else:
+        user_email = token.verify_token(access_token)
     # mission_generator = Mission_Generator()
-    # mission_splitter = Misssion_Splitter()
+    # mission_splitter = Mission_Splitter()
     # task_publisher = Task_Publisher()
     
     dst_info = database.get_dst(Dst)
@@ -62,6 +68,7 @@ async def generate_MF(request: Request):
     pre_inference_model = b'onnx' 
     mission_file = {}
     mission_file = Mission_Generator.make_mission(
+        user_email=user_email,
         routes=routes,
         drone_name=drone_name,
         altitude=altitude,
@@ -71,12 +78,12 @@ async def generate_MF(request: Request):
     )  
     print(mission_file)
     
-    
-    
     database.insert_missionfile(mission_file)
+    
+    
         
         
-    return True
+    return
 
 
 
@@ -95,6 +102,18 @@ async def get_drone_gps(request: Request):
 
 
 
-@router.post("/drone_stop")
-def drone_stop():
+async def drone_stop(request: Request):
+    data = await request.json()
+    drone_name = data.get('drone_name')
+    # client의 드론 큐에 있는 메시지 비우기
+    rabbitmq.rm_queue_message(queue_name=drone_name)
+    return 
+
+
+async def drone_landing():
+    return
+    
+    
+async def drone_return():
+    mission_
     return 
