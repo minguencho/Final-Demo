@@ -50,8 +50,7 @@ async def generate_MF(request: Request):
         return 
     else:
         user_email = token.verify_token(access_token)
-    
-    mission_generator = utils.Mission_Generator()
+    # mission_generator = Mission_Generator()
     # mission_splitter = Mission_Splitter()
     # task_publisher = Task_Publisher()
     
@@ -67,7 +66,7 @@ async def generate_MF(request: Request):
     receiver_info = database.get_receiver_info('111')
     pre_inference_model = b'onnx' 
     mission_file = {}
-    mission_file = mission_generator.make_mission(
+    mission_file = utils.make_mission(
         user_email=user_email,
         routes=routes,
         drone_name=drone_name,
@@ -79,10 +78,7 @@ async def generate_MF(request: Request):
     print(mission_file)
     
     database.insert_missionfile(mission_file)
-    
-    
-        
-        
+
     return
 
 
@@ -115,5 +111,4 @@ async def drone_landing():
     
     
 async def drone_return():
-    mission_
     return 
