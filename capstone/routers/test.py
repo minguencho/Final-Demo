@@ -68,8 +68,8 @@ async def generate_MF(request: Request):
     pre_inference_model = b'onnx' 
     mission_file = {}
     mission_file = mission_generator.make_mission(
-        user_email=user_email,
         routes=routes,
+        user_email=user_email,
         drone_name=drone_name,
         altitude=altitude,
         Dstcoordinate=Dst,
@@ -115,5 +115,4 @@ async def drone_landing():
     
     
 async def drone_return():
-    mission_
     return 
