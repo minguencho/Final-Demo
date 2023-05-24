@@ -97,7 +97,9 @@ async def get_drone_gps(request: Request):
 
 async def drone_stop(request: Request):
     data = await request.json()
+    drone_name = data.get('drone_name')
     
+
     return 
 
 
