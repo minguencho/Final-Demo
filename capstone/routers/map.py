@@ -95,6 +95,15 @@ async def get_drone_gps(request: Request):
 
 
 
-@router.post("/drone_stop")
-def drone_stop():
+async def drone_stop(request: Request):
+    data = await request.json()
+    
+    return 
+
+
+async def drone_landing():
+    return
+    
+    
+async def drone_return():
     return 

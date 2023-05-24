@@ -77,35 +77,6 @@ def get_dst(Dstcoordinate):
     
     return dst_info
 
-def get_traj(Dstcoordinate):
-    routes=[]
-    document = db['paths'].find_one({'Dst coordinate': Dstcoordinate})
-    # document가 None이면 trajectories가 없음
-    if document is None:
-        return []
-
-    # trajectories 필드에서 routes 가져오기
-    trajectories = document['trajectories']
-    routes = trajectories[0]
-    route = []
-    for i in routes:
-        if i not in route:
-            route.append(i)
-    """for route in trajectories:
-        routes.append(route)"""
-
-    return route
-
-def get_Dstcoordinate(Dstcoordinate):
-    document = db['paths'].find_one({'Dst coordinate': Dstcoordinate})
-    Dstcoordinate = document['Dst coordinate']
-    return Dstcoordinate
-
-def get_altitude(Dstcoordinate):
-    document = db['paths'].find_one({'Dst coordinate': Dstcoordinate})
-    altitude = document['altitude']
-    print(altitude)
-    return altitude
 
 #drone select
 def drone_select(distance):
