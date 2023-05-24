@@ -142,9 +142,11 @@
   var routes_return
   var drone_name
   var Dst
+  var mission_file
   var gps_alt
   var gps_lat
   var gps_lon
+  var distance
   mapboxgl.accessToken = 'pk.eyJ1IjoibWluZ3VlbmNobyIsImEiOiJjbGdveW1sNjMwaGhuM3NxbTIxdWs1b3N2In0.6Zgzs_gXXFCRY5oVK_Ziww';
 
   const map = new mapboxgl.Map({
@@ -241,8 +243,17 @@
         Dst
       })
     })
+    .then(response => {
+      console.log(response.status);
+      return response.json();
+    })
+    .then(data => {
+      console.log(data);
+      mission_file = data.mission_file
+    })
     .catch(error => console.error(error));
     console.log("successfully created MF file and saved it to DB.");
+    deliver_start()
     setInterval(get_gps, 3000) // 3초에 한번씩 GPS 최신화
   });
 
@@ -255,6 +266,18 @@
   function deliver_start() {
     var chatbox = document.getElementById("chatbox");
     chatbox.innerHTML += "<p>2. 배송이 시작되었습니다.</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+
+  function delivering() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>3. 배송이 중입니다. {distance}m 남았습니다. </p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+
+  function deliver_end() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>4. 목적지에 도착하였습니다. 고도가 낮아집니다.</p>";
     chatbox.scrollTop = chatbox.scrollHeight;
   }
 
@@ -372,14 +395,24 @@
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        drone_name
+        drone_name,
+        Dst
       })
     })
     .then(response => response.json())
     .then(data => {
       console.log(data)
       // GPS 데이터 업데이트
-      var gps = [data.longitude, data.latitude];
+      gps_alt = data.alt
+      gps_lat = data.lat
+      gps_lon = data.lon
+      distance = data.distance
+
+      if (distance < 1) {deliver_end()}
+      else {delivering()}
+      
+
+      var gps = [gps_lon, gps_lat];
       map.getSource('drone').setData({
         type: 'Feature',
         geometry: {

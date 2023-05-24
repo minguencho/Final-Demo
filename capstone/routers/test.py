@@ -83,7 +83,7 @@ async def generate_MF(request: Request):
     
         
         
-    return
+    return {'mission_file': mission_file}
 
 
 
@@ -91,20 +91,29 @@ async def generate_MF(request: Request):
 async def get_drone_gps(request: Request):
     data = await request.json()
     drone_name = data.get('drone_name')
+    dst = data.get('Dst')
     print(drone_name)
-    # log = database.get_log(drone_name)
-    # alt = log['alt']
-    # lat = log['lat']
-    # lon = log['lon']
-    lat = 35.15527733234616
-    lon = 128.10043672281472
-    return {"latitude": lat, "longitude": lon}
+    log = database.get_log(drone_name)
+    alt = log['alt']
+    lat = log['lat']
+    lon = log['lon']
+    
+    source = [lat, lon]
+    distance = utils.distance_calc(source, dst)
+    
+    # alt = 10
+    # lat = 35.15527733234616
+    # lon = 128.10043672281472
+    
+    return {"alt": alt, "lat": lat, "lon": lon, "distacne": distance}
 
 
 
 async def drone_stop(request: Request):
     data = await request.json()
-    drone_name = data.get('drone_name')
+    mission_file = data.get('missoin_file')
+    drone_name = mission_file['drone_name']
+    
     # client의 드론 큐에 있는 메시지 비우기
     rabbitmq.rm_queue_message(queue_name=drone_name)
     return 
@@ -114,5 +123,7 @@ async def drone_landing():
     return
     
     
-async def drone_return():
+async def drone_return(request: Request):
+    data = await request.json()
+    mission_file = data.get('mission_file')
     return 
