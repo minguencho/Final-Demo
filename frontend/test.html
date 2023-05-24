@@ -11,23 +11,65 @@
         margin: 0;
         padding: 0;
       }
+      #map-container {
+        position: relative;
+        height: 100%;
+      }
       #map {
         position: absolute;
         top: 0;
         bottom: 0;
         width: 100%;
       }
-      #send-button {
+      #overlay {
         position: absolute;
-        top: 200px;
+        bottom: 20px;
         right: 10px;
+        width: 300px;
+        height: 200px;
+        background-color: rgb(255, 255, 255);
         padding: 10px;
-        background-color: #fff;
-        border: 1px solid #999;
-        font-family: 'Open Sans', sans-serif;
-        font-size: 14px;
-        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        border: 1px solid black; 
+        border-width: 2px;
       }
+      #messagediv {
+
+        margin-bottom: 10px;
+      }
+      #chat-log {
+        height: calc(100% - 40px);
+      }
+      .input-box-container {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        margin-left: 10px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+      }
+      #chatbox {
+        width: 280px;
+        height: 156.4px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        flex-direction: column;
+        overflow-y: scroll;
+        border: 1px solid black;
+        border-width: 2px;
+      }
+      #input-box {
+        width: 200px;
+        margin-right: 10px;
+      }
+      #send-button {
+        margin-top: 10px;
+      }
+
       #select-destination-button {
         position: absolute;
         top: 150px;
@@ -51,6 +93,17 @@
         font-size: 14px;
         cursor: pointer;
       }
+      #receive-button {
+        position: absolute;
+        top: 250px;
+        right: 10px;
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #999;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+      }
 
       .mapboxgl-ctrl-group {
         display: flex;
@@ -65,11 +118,21 @@
     </style>
 </head>
 <body>
-
-<div id='map'></div>
-<button id="select-destination-button">목적지 선택</button>
-<button id="complete-button">설정 완료</button>
-
+<div id = "map-container">
+  <div id='map'></div>
+  <button id="select-destination-button">목적지 선택</button>
+  <button id="complete-button">배송 시작</button>
+  <button id="receive-button">수령 완료</button>
+  <div id="overlay">
+    <div id ="messagediv">메세지 창</div>
+    <div id="chatbox"></div>
+    <div class="input-box-container">
+      <input type="text" id="input-box" class="input-box" placeholder="메시지 입력">
+      <button onclick="sendMessage()">전송</button>
+    </div>
+    
+  </div>
+</div>
 <script>
   var BC_latitude = '{{ lat }}'
   var BC_longitude = '{{ lng }}'
@@ -90,21 +153,57 @@
   const nav = new mapboxgl.NavigationControl();
   map.addControl(nav, 'top-right');
 
-
   const marker = new mapboxgl.Marker({
         color: "#FF0000"}
         )
         .setLngLat([BC_longitude, BC_latitude])
         .setPopup(new mapboxgl.Popup().setHTML("<h1>BaseCamp</h1>"))
         .addTo(map);
+
+        
   map.on('load', function() {
+
     for (var i = 0; i < service_able_waypoint.length; i++) {
       var waypoint = service_able_waypoint[i];
+      var radius = 3;
       var service_marker = new mapboxgl.Marker()
         .setLngLat([waypoint[1],waypoint[0]])
         .setPopup(new mapboxgl.Popup().setHTML("<h1>service zone</h1>"))
         .addTo(map);
+        var circleSource = {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [waypoint[1],waypoint[0]]
+            },
+            properties: {}
+          }]
+        }
+      };
+
+      // 원을 나타내는 layer를 추가
+      map.addLayer({
+        id: 'circle-layer'+i,
+        type: 'circle',
+        source: circleSource,
+        paint: {
+          'circle-radius': {
+            stops: [[0, 0], [20, (radius / 0.075)]] // 미터 단위를 픽셀 단위로 변환
+          },
+          'circle-color': '#FF0000', // 원의 색상
+          'circle-opacity': 0.5 // 원의 투명도
+        }
+      });
+      if (map.getLayer("circle-layer"+i)) {
+        console.log("circle layer exists"+i);
+      } else {
+        console.log("circle layer does not exist");
       }
+    }  
   });
 
   let isSelectingDefinition = false;
@@ -116,6 +215,18 @@
       console.log('Clicked at: ' + lngLat.lng + ', ' + lngLat.lat);
       confirmAction();
     }
+  }
+
+  function showDestinationMessage() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>1.목적지가 선택되었습니다</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+
+  function deliver_start() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>2. 배송이 시작되었습니다.</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
   }
   document.getElementById('select-destination-button').addEventListener('click', function() {
     if (!isSelectingDefinition) {
@@ -134,6 +245,7 @@
     })
     .catch(error => console.error(error));
     console.log("successfully created MF file and saved it to DB.")
+    deliver_start();
   });
 
   function confirmAction() {
@@ -141,10 +253,6 @@
       const confirmation = confirm("선택한 좌표값을 전송하시겠습니까?");
       if (confirmation) {
         const data = lngLat;
-        const Newmarker = new mapboxgl.Marker()
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup()
-        .setHTML("<h1>Destination</h1>")).addTo(map);
         fetch('/map', {
           method: 'POST',
           headers: {
@@ -165,7 +273,17 @@
           console.log(routes_return)
           // routes_return이 존재하는 경우 경로를 그려줍니다.
           if (routes_return.length > 0) {
+            if (map.getLayer('line_layer')) {
+              console.log("line layer exists");
+              map.removeLayer('line_layer');
+              console.log("line layer remove");
+              map.removeSource('line_layer');
+              console.log("line Source remove");
+            } else {
+              console.log("circle layer does not exist");
+            }
             drawRoute(routes_return)
+            showDestinationMessage();
             /*for (var i = 0; i < routes_return.length; i++) {
                 drawRoute(routes_return[i]);
             }*/
@@ -178,6 +296,7 @@
           // 선택 모드를 끝내고 목적지 선택 버튼을 다시 활성화
           isSelectingDefinition = false;
           map.getCanvas().style.cursor = '';
+
         });
       } else {
         console.log('취소되었습니다.');
@@ -204,6 +323,11 @@
     }
     coordinates = [...new Set(coordinates.map(JSON.stringify))].map(JSON.parse);
     console.log(coordinates)
+
+    if (map.getLayer("line-layer")) {
+      map.removeLayer("line-layer");
+      console("line already exist, remove")
+    }
     var line = {
       'type': 'Feature',
       'geometry': {
@@ -212,6 +336,7 @@
       }
     };
     new mapboxgl.Marker().setLngLat(coordinates[coordinates.length - 1]).addTo(map);
+
     map.addLayer({
       'id': 'line_layer',
       'type': 'line',
