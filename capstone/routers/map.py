@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from pymongo.mongo_client import MongoClient
 from Mission_Generator import Mission_Generator
 from capstone import database,utils
 
 router = APIRouter(
-    prefix="/map",
-    tags=['map']
+    prefix="/test",
+    tags=['test']
 )
 
 templates = Jinja2Templates(directory="frontend")
@@ -21,7 +20,7 @@ SV_nodes = database.get_service_nodes()
 async def map_page(request : Request):
     service_able_waypoint = database.get_service_nodes()
     context = {'request' : request, 'lat' : BC[0], 'lng' : BC[1], 'service_able_waypoint' : service_able_waypoint}
-    return templates.TemplateResponse("/gps_test.html",context)
+    return templates.TemplateResponse("/test.html",context)
 
 
 @router.post("/")
@@ -36,7 +35,7 @@ async def fetch_dst(request: Request):
     print("assigned drone is ", name)
     Dst = utils.find_closeset_coordinate(Dst,SV_nodes)
     dst_info = database.get_dst(Dst)
-    routes = dst_info['trajectories']
+    routes = dst_info['trajectories'][0]
     return {"success": True, "routes" : routes, "name": name, "Dst": Dst}
 
 
@@ -52,34 +51,29 @@ async def generate_MF(request: Request):
     
     dst_info = database.get_dst(Dst)
     
-    if dst_info is None:
-        print('dst_info is None')
-        # 예외 처리 코드
+    routes = dst_info['trajectories'][0]
+    altitude = dst_info['altitude']
+    Dst = dst_info['Dst coordinate']
     
-    else:
-        routes = dst_info['trajectories']
-        altitude = dst_info['altitude']
-        Dst = dst_info['Dst coordinate']
-        
-        print(Dst)
-        print(routes)
-        
-        receiver_info = database.get_receiver_info('111')
-        pre_inference_model = b'onnx' 
-        mission_file = {}
-        mission_file = Mission_Generator.make_mission(
-            routes=routes,
-            drone_name=drone_name,
-            altitude=altitude,
-            Dstcoordinate=Dst,
-            receiver_info=receiver_info,
-            pre_inference_model=pre_inference_model
-        )  
-        print(mission_file)
-        
-        
-        
-        database.insert_missionfile(mission_file)
+    print(Dst)
+    print(routes)
+    
+    receiver_info = database.get_receiver_info('111')
+    pre_inference_model = b'onnx' 
+    mission_file = {}
+    mission_file = Mission_Generator.make_mission(
+        routes=routes,
+        drone_name=drone_name,
+        altitude=altitude,
+        Dstcoordinate=Dst,
+        receiver_info=receiver_info,
+        pre_inference_model=pre_inference_model
+    )  
+    print(mission_file)
+    
+    
+    
+    database.insert_missionfile(mission_file)
         
         
     return True
