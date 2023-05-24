@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from Mission_Generator import Mission_Generator
 from capstone import database,utils
 
 router = APIRouter(
