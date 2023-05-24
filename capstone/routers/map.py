@@ -32,10 +32,11 @@ async def fetch_dst(request: Request):
     distance = utils.distance_calc(BC,Dst)
     print("BC-Dst distance is",distance,"km")
 
-    print("assigned drone is ", database.drone_select(distance))
     name = database.drone_select(distance)
+    print("assigned drone is ", name)
     Dst = utils.find_closeset_coordinate(Dst,SV_nodes)
-    routes = database.get_traj(Dst)
+    dst_info = database.get_dst(Dst)
+    routes = dst_info['trajectories']
     return {"success": True, "routes" : routes, "name": name, "Dst": Dst}
 
 
@@ -49,25 +50,38 @@ async def generate_MF(request: Request):
     # mission_splitter = Misssion_Splitter()
     # task_publisher = Task_Publisher()
     
-    routes = database.get_traj(Dst)
-    altitude = database.get_altitude(Dst)
-    Dst = database.get_Dstcoordinate(Dst)
+    dst_info = database.get_dst(Dst)
     
-    print(Dst)
-    print(routes)
+    if dst_info is None:
+        print('dst_info is None')
+        # 예외 처리 코드
     
-    receiver_info = database.get_receiver_info('111')
-    pre_inference_model = b'onnx' 
-    mission_file = {}
-    mission_file = Mission_Generator.make_mission(
-        routes=routes,
-        drone_name=drone_name,
-        altitude=altitude,
-        Dstcoordinate=Dst,
-        receiver_info=receiver_info,
-        pre_inference_model=pre_inference_model)  
-    print(mission_file)
-    database.insert_missionfile(mission_file)
+    else:
+        routes = dst_info['trajectories']
+        altitude = dst_info['altitude']
+        Dst = dst_info['Dst coordinate']
+        
+        print(Dst)
+        print(routes)
+        
+        receiver_info = database.get_receiver_info('111')
+        pre_inference_model = b'onnx' 
+        mission_file = {}
+        mission_file = Mission_Generator.make_mission(
+            routes=routes,
+            drone_name=drone_name,
+            altitude=altitude,
+            Dstcoordinate=Dst,
+            receiver_info=receiver_info,
+            pre_inference_model=pre_inference_model
+        )  
+        print(mission_file)
+        
+        
+        
+        database.insert_missionfile(mission_file)
+        
+        
     return True
 
 
@@ -78,9 +92,15 @@ async def get_drone_gps(request: Request):
     drone_name = data.get('drone_name')
     print(drone_name)
     # log = database.get_log(drone_name)
-    # alt = log.alt
-    # lat = log.lat
-    # lon = log.lon
+    # alt = log['alt']
+    # lat = log['lat']
+    # lon = log['lon']
     lat = 35.15527733234616
     lon = 128.10043672281472
     return {"latitude": lat, "longitude": lon}
+
+
+
+@router.post("/drone_stop")
+def drone_stop():
+    return 

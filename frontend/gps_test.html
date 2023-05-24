@@ -79,6 +79,9 @@
   var routes_return
   var drone_name
   var Dst
+  var gps_alt
+  var gps_lat
+  var gps_lon
   mapboxgl.accessToken = 'pk.eyJ1IjoibWluZ3VlbmNobyIsImEiOiJjbGdveW1sNjMwaGhuM3NxbTIxdWs1b3N2In0.6Zgzs_gXXFCRY5oVK_Ziww';
 
   const map = new mapboxgl.Map({
@@ -142,6 +145,7 @@
     .catch(error => console.error(error));
     console.log("successfully created MF file and saved it to DB.");
     setInterval(get_gps, 3000) // 3초에 한번씩 GPS 최신화
+    console.log('here!!')
   });
 
   function confirmAction() {

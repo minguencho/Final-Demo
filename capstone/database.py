@@ -60,14 +60,6 @@ def get_nodes(name):
     dst_node = db['paths'].find_one({'name' : name})['Dst coordinate']
     return dst_node
 
-def get_altitude(path_name):
-    altitude = db['paths'].find_one({'path': path_name})['altitude']
-    return altitude
-
-def get_Dstcoordinate(path_name):
-    Dstcoordinate = db['paths'].find_one({'path': path_name})['Dst coordinate']
-    return Dstcoordinate
-
 def get_receiver_info(email):
     receiver_info = db['Users'].find_one({'email' : email})['receiver_info']
     return receiver_info
@@ -78,6 +70,12 @@ def get_service_waypoint():
             last_path = route[-1][-1]
             waypoint.append((last_path))
     return waypoint
+
+
+def get_dst(Dstcoordinate):
+    dst_info = db['paths'].find_one({'Dst coordinate': Dstcoordinate})
+    
+    return dst_info
 
 def get_traj(Dstcoordinate):
     routes=[]

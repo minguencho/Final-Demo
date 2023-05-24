@@ -1,7 +1,7 @@
 from pymongo.mongo_client import MongoClient
 from capstone import database
 # DB 연결
-uri = "mongodb+srv://cho000130:cho41455@capstone.ajviw1n.mongodb.net/"
+uri = "mongodb+srv://bmk802:ahdrhelqlqlqjs1!@capstone.ajviw1n.mongodb.net/?retryWrites=true&w=majority"
 
 # Create a new client and connect to the server
 client = MongoClient(uri)
