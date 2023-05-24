@@ -11,65 +11,23 @@
         margin: 0;
         padding: 0;
       }
-      #map-container {
-        position: relative;
-        height: 100%;
-      }
       #map {
         position: absolute;
         top: 0;
         bottom: 0;
         width: 100%;
       }
-      #overlay {
-        position: absolute;
-        bottom: 20px;
-        right: 10px;
-        width: 300px;
-        height: 200px;
-        background-color: rgb(255, 255, 255);
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        align-items: center;
-        border: 1px solid black; 
-        border-width: 2px;
-      }
-      #messagediv {
-
-        margin-bottom: 10px;
-      }
-      #chat-log {
-        height: calc(100% - 40px);
-      }
-      .input-box-container {
-        margin-top: 10px;
-        margin-bottom: 10px;
-        margin-left: 10px;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-      }
-      #chatbox {
-        width: 280px;
-        height: 156.4px;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        flex-direction: column;
-        overflow-y: scroll;
-        border: 1px solid black;
-        border-width: 2px;
-      }
-      #input-box {
-        width: 200px;
-        margin-right: 10px;
-      }
       #send-button {
-        margin-top: 10px;
+        position: absolute;
+        top: 200px;
+        right: 10px;
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #999;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 14px;
+        cursor: pointer;
       }
-
       #select-destination-button {
         position: absolute;
         top: 150px;
@@ -93,17 +51,6 @@
         font-size: 14px;
         cursor: pointer;
       }
-      #receive-button {
-        position: absolute;
-        top: 250px;
-        right: 10px;
-        padding: 10px;
-        background-color: #fff;
-        border: 1px solid #999;
-        font-family: 'Open Sans', sans-serif;
-        font-size: 14px;
-        cursor: pointer;
-      }
 
       .mapboxgl-ctrl-group {
         display: flex;
@@ -118,28 +65,33 @@
     </style>
 </head>
 <body>
-<div id = "map-container">
-  <div id='map'></div>
-  <button id="select-destination-button">목적지 선택</button>
-  <button id="complete-button">배송 시작</button>
-  <button id="receive-button">수령 완료</button>
-  <div id="overlay">
-    <div id ="messagediv">메세지 창</div>
-    <div id="chatbox"></div>
-    <div class="input-box-container">
-      <input type="text" id="input-box" class="input-box" placeholder="메시지 입력">
-      <button onclick="sendMessage()">전송</button>
+  <div id = "map-container">
+    <div id='map'></div>
+    <button id="select-destination-button">목적지 선택</button>
+    <button id="complete-button">배송 시작</button>
+    <button id="receive-button">수령 완료</button>
+    <div id="overlay">
+      <div id ="messagediv">메세지 창</div>
+      <div id="chatbox"></div>
+      <div class="input-box-container">
+        <input type="text" id="input-box" class="input-box" placeholder="메시지 입력">
+        <button onclick="sendMessage()">전송</button>
+      </div>
+      
     </div>
-    
   </div>
-</div>
-<script>
+  <script>
   var BC_latitude = '{{ lat }}'
   var BC_longitude = '{{ lng }}'
   var lngLat
   var service_able_waypoint = JSON.parse('{{ service_able_waypoint }}')
   var waypoint
   var routes_return
+  var drone_name
+  var Dst
+  var gps_alt
+  var gps_lat
+  var gps_lon
   mapboxgl.accessToken = 'pk.eyJ1IjoibWluZ3VlbmNobyIsImEiOiJjbGdveW1sNjMwaGhuM3NxbTIxdWs1b3N2In0.6Zgzs_gXXFCRY5oVK_Ziww';
 
   const map = new mapboxgl.Map({
@@ -153,6 +105,7 @@
   const nav = new mapboxgl.NavigationControl();
   map.addControl(nav, 'top-right');
 
+
   const marker = new mapboxgl.Marker({
         color: "#FF0000"}
         )
@@ -160,7 +113,6 @@
         .setPopup(new mapboxgl.Popup().setHTML("<h1>BaseCamp</h1>"))
         .addTo(map);
 
-        
   map.on('load', function() {
 
     for (var i = 0; i < service_able_waypoint.length; i++) {
@@ -217,6 +169,30 @@
     }
   }
 
+  document.getElementById('select-destination-button').addEventListener('click', function() {
+    if (!isSelectingDefinition) {
+      map.getCanvas().style.cursor = 'crosshair';
+      isSelectingDefinition = true;
+      map.on('click', onMapClick);
+    }
+  });
+
+  document.getElementById('complete-button').addEventListener('click', function() {
+    fetch('/test/generate_MF', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        drone_name,
+        Dst
+      })
+    })
+    .catch(error => console.error(error));
+    console.log("successfully created MF file and saved it to DB.");
+    setInterval(get_gps, 3000) // 3초에 한번씩 GPS 최신화
+  });
+
   function showDestinationMessage() {
     var chatbox = document.getElementById("chatbox");
     chatbox.innerHTML += "<p>1.목적지가 선택되었습니다</p>";
@@ -228,32 +204,15 @@
     chatbox.innerHTML += "<p>2. 배송이 시작되었습니다.</p>";
     chatbox.scrollTop = chatbox.scrollHeight;
   }
-  document.getElementById('select-destination-button').addEventListener('click', function() {
-    if (!isSelectingDefinition) {
-      map.getCanvas().style.cursor = 'crosshair';
-      isSelectingDefinition = true;
-      map.on('click', onMapClick);
-    }
-  });
-  document.getElementById('complete-button').addEventListener('click', function() {
-    fetch('/map/generate_MF', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: {}
-    })
-    .catch(error => console.error(error));
-    console.log("successfully created MF file and saved it to DB.")
-    deliver_start();
-  });
 
   function confirmAction() {
     if (typeof lngLat !== 'undefined') {
       const confirmation = confirm("선택한 좌표값을 전송하시겠습니까?");
+
       if (confirmation) {
         const data = lngLat;
-        fetch('/map', {
+
+        fetch('/test', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -262,15 +221,13 @@
         })
         .then(response => {
           console.log(response.status);
-        return response.json();
+          return response.json();
         })
         .then(data => {
           console.log(data);
-          return data.routes;
-        })
-        .then(routes => {
-          routes_return = routes;
-          console.log(routes_return)
+          Dst = data.Dst;
+          name = data.name;
+          routes_return = data.routes;
           // routes_return이 존재하는 경우 경로를 그려줍니다.
           if (routes_return.length > 0) {
             if (map.getLayer('line_layer')) {
@@ -296,7 +253,6 @@
           // 선택 모드를 끝내고 목적지 선택 버튼을 다시 활성화
           isSelectingDefinition = false;
           map.getCanvas().style.cursor = '';
-
         });
       } else {
         console.log('취소되었습니다.');
@@ -309,6 +265,7 @@
   }
   function drawRoute(route) {
     var coordinates = [];
+
     for (var i = 0; i < route.length; i++) {
       // 위도와 경도의 순서 변경
       var link = route[i];
@@ -321,6 +278,7 @@
       coordinates.push(node1);
       coordinates.push(node2);
     }
+    
     coordinates = [...new Set(coordinates.map(JSON.stringify))].map(JSON.parse);
     console.log(coordinates)
 
@@ -328,6 +286,7 @@
       map.removeLayer("line-layer");
       console("line already exist, remove")
     }
+
     var line = {
       'type': 'Feature',
       'geometry': {
@@ -335,8 +294,9 @@
         'coordinates': coordinates
       }
     };
-    new mapboxgl.Marker().setLngLat(coordinates[coordinates.length - 1]).addTo(map);
 
+    new mapboxgl.Marker().setLngLat(coordinates[coordinates.length - 1]).addTo(map);
+    
     map.addLayer({
       'id': 'line_layer',
       'type': 'line',
@@ -350,6 +310,59 @@
       }
     });
   }
+
+  // for gps
+  function get_gps() {
+    fetch('/test/gps', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        drone_name
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data)
+      // GPS 데이터 업데이트
+      var gps = [data.longitude, data.latitude];
+      map.getSource('drone').setData({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: gps
+        },
+        properties: {}
+      });
+    });
+  }
+
+  map.on('load', function() {
+    map.addSource('drone', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [0, 0]
+        },
+        properties: {}
+      }
+    });
+
+    map.addLayer({
+      id: 'drone',
+      type: 'circle',
+      source: 'drone',
+      paint: {
+        'circle-color': 'red',
+        'circle-radius': 6
+      }
+    });
+  });
+
+  
   </script>
 </body>
 </html>
