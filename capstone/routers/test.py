@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from Mission_Generator import Mission_Generator
 from capstone import database, utils, rabbitmq, token
 
 router = APIRouter(
@@ -51,7 +50,8 @@ async def generate_MF(request: Request):
         return 
     else:
         user_email = token.verify_token(access_token)
-    # mission_generator = Mission_Generator()
+    
+    mission_generator = utils.Mission_Generator()
     # mission_splitter = Mission_Splitter()
     # task_publisher = Task_Publisher()
     
@@ -67,7 +67,7 @@ async def generate_MF(request: Request):
     receiver_info = database.get_receiver_info('111')
     pre_inference_model = b'onnx' 
     mission_file = {}
-    mission_file = Mission_Generator.make_mission(
+    mission_file = mission_generator.make_mission(
         user_email=user_email,
         routes=routes,
         drone_name=drone_name,
