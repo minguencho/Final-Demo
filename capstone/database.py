@@ -2,10 +2,8 @@ from pymongo import MongoClient
 
 client = "mongodb+srv://cho000130:cho41455@capstone.ajviw1n.mongodb.net/"
 database = "capstone"
-log_database = "capstone_log"
 mongodb_client = MongoClient(client)
 db = mongodb_client[database]
-log_db = mongodb_client[log_database]
 
 ## login
 
@@ -94,16 +92,14 @@ def update_receiver_info(email,receiver_info):
 
 
 ## For Monitoring 
-
 # insert log
-def insert_Log(log):
-    drone_name = log['drone_name']
-    log_db[drone_name].insert_one(log)
+def insert_log(log):
+    db['Logs'].insert_one(log)
     return True
 
 # get log
 def get_log(drone_name):
-    log = db['Logs'].find().sort("create_at", -1).limit(1)
+    log = db['Logs'].find({'drone_name': drone_name}).sort("create_at", -1).limit(1)
     if log.count() > 0:
         return log[0]
     else:
