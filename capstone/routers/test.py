@@ -1,5 +1,3 @@
-import json
-
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from capstone import database, utils, rabbitmq, token
