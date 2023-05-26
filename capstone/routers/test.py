@@ -50,7 +50,6 @@ async def generate_MF(request: Request):
         return 
     else:
         user_email = token.verify_token(access_token)
-    
     mission_generator = utils.Mission_Generator()
     # mission_splitter = Mission_Splitter()
     # task_publisher = Task_Publisher()
@@ -77,15 +76,9 @@ async def generate_MF(request: Request):
         pre_inference_model=pre_inference_model
     )  
     print(mission_file)
-    
     database.insert_missionfile(mission_file)
-    
-    
-        
-        
-    return {'mission_file': mission_file}
-
-
+    mission_file.pop("_id")
+    return{"mission_file" : mission_file}
 
 @router.post("/gps")
 async def get_drone_gps(request: Request):
@@ -93,22 +86,36 @@ async def get_drone_gps(request: Request):
     drone_name = data.get('drone_name')
     dst = data.get('Dst')
     print(drone_name)
-    log = database.get_log(drone_name)
+    """ log = database.get_log(drone_name)
     alt = log['alt']
     lat = log['lat']
     lon = log['lon']
+    """
+    
+    alt = 10
+    lat = 35.15527733234616
+    lon = 128.10043672281472
     
     source = [lat, lon]
     distance = utils.distance_calc(source, dst)
     
-    # alt = 10
-    # lat = 35.15527733234616
-    # lon = 128.10043672281472
-    
     return {"alt": alt, "lat": lat, "lon": lon, "distacne": distance}
 
+@router.post("/recognize")
+async def get_drone_gps(request: Request):
+    recognize = 0
+    
+    #얼굴인식 코드
+
+    #얼굴인식 성공 시에
+    recognize = 1
+    return {"recognize" : recognize}
 
 
+
+
+
+@router.post("drone control")
 async def drone_stop(request: Request):
     data = await request.json()
     mission_file = data.get('missoin_file')

@@ -147,6 +147,10 @@
   var gps_lat
   var gps_lon
   var distance
+  var alt_check_id
+  var recognize_check_id
+  //얼굴 인식 시간
+  var recoginize_time = 0
   mapboxgl.accessToken = 'pk.eyJ1IjoibWluZ3VlbmNobyIsImEiOiJjbGdveW1sNjMwaGhuM3NxbTIxdWs1b3N2In0.6Zgzs_gXXFCRY5oVK_Ziww';
 
   const map = new mapboxgl.Map({
@@ -205,11 +209,6 @@
           'circle-opacity': 0.5 // 원의 투명도
         }
       });
-      if (map.getLayer("circle-layer"+i)) {
-        console.log("circle layer exists"+i);
-      } else {
-        console.log("circle layer does not exist");
-      }
     }  
   });
 
@@ -248,13 +247,16 @@
       return response.json();
     })
     .then(data => {
-      console.log(data);
+      
       mission_file = data.mission_file
+
+      
     })
     .catch(error => console.error(error));
     console.log("successfully created MF file and saved it to DB.");
     deliver_start()
-    setInterval(get_gps, 3000) // 3초에 한번씩 GPS 최신화
+    const get_gps_id = setInterval(get_gps, 3000) // 3초에 한번씩 GPS 최신화
+    const check_deliver_id = setInterval(check_deliver, 3000)
   });
 
   function showDestinationMessage() {
@@ -268,10 +270,9 @@
     chatbox.innerHTML += "<p>2. 배송이 시작되었습니다.</p>";
     chatbox.scrollTop = chatbox.scrollHeight;
   }
-
   function delivering() {
     var chatbox = document.getElementById("chatbox");
-    chatbox.innerHTML += "<p>3. 배송이 중입니다. {distance}m 남았습니다. </p>";
+    chatbox.innerHTML += "<p>3. 배송 중 입니다. {distance}m 남았습니다. </p>";
     chatbox.scrollTop = chatbox.scrollHeight;
   }
 
@@ -280,6 +281,32 @@
     chatbox.innerHTML += "<p>4. 목적지에 도착하였습니다. 고도가 낮아집니다.</p>";
     chatbox.scrollTop = chatbox.scrollHeight;
   }
+  function recognize_start() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>5. 얼굴 인식을 진행합니다.</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+  function recognize_end() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>6. 얼굴 인식 완료 ! 드론이 하강합니다.</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+  function recognize_fail() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>6. 얼굴 인식 실패. 비밀번호를 입력해주세요.</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+  function receive_comlete() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>7. 물품을 꺼내고 안전 거리를 확보한 후 수령 완료 버튼을 눌러주세요.</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+  function comeback() {
+    var chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML += "<p>8. 드론이 복귀합니다.</p>";
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+
 
   function confirmAction() {
     if (typeof lngLat !== 'undefined') {
@@ -317,9 +344,6 @@
             }
             drawRoute(routes_return)
             showDestinationMessage();
-            /*for (var i = 0; i < routes_return.length; i++) {
-                drawRoute(routes_return[i]);
-            }*/
           }
         })
         .catch(error => {
@@ -408,10 +432,6 @@
       gps_lon = data.lon
       distance = data.distance
 
-      if (distance < 1) {deliver_end()}
-      else {delivering()}
-      
-
       var gps = [gps_lon, gps_lat];
       map.getSource('drone').setData({
         type: 'Feature',
@@ -422,6 +442,7 @@
         properties: {}
       });
     });
+
   }
 
   map.on('load', function() {
@@ -447,8 +468,53 @@
       }
     });
   });
+  //드론 배송 중 -> 목적지 도달
+  function check_deliver(){
+    if (distance < 1) {
+      deliver_end()
+      clearInterval(check_deliver_id)
+      alt_check_id = setInterval(alt_check, 3000)
+    }
+  }
 
-  
+  function alt_check(){
+    if (gps_alt < 3.5) {
+      recognize_start()
+      clearInterval(alt_check_id)
+      recognize_check_id = setInterval(recognize_check, 1000)
+    }
+  }
+
+  function recognize_check(){
+    fetch('/test/recognize', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        recoginize
+      })
+    })
+    .then(data => {
+      console.log(data)
+      // GPS 데이터 업데이트
+      recoginize = data.recoginize
+    })
+    if (recognize == 1){
+      clearInterval(recognize_check_id)
+      recognize_end()
+      receive_comlete()
+    }
+    else{
+      recoginize_time = recoginize_time + 1
+      //실패
+      if(recoginize_time > 30){
+      clearInterval(recognize_check_id)
+      }
+    }
+    
+  }
+
   </script>
 </body>
 </html>
