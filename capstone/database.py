@@ -94,7 +94,6 @@ def update_receiver_info(email,receiver_info):
 
 
 ## For Monitoring 
-
 # insert log
 def insert_Log(log):
     drone_name = log['drone_name']
@@ -103,7 +102,7 @@ def insert_Log(log):
 
 # get log
 def get_log(drone_name):
-    log = db['Logs'].find().sort("create_at", -1).limit(1)
+    log = log_db['Logs'].find({'drone_name': drone_name}).sort("create_at", -1).limit(1)
     if log.count() > 0:
         return log[0]
     else:
