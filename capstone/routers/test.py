@@ -30,12 +30,12 @@ async def fetch_dst(request: Request):
     distance = utils.distance_calc(BC,Dst)
     print("BC-Dst distance is",distance,"km")
 
-    name = database.drone_select(distance)
-    print("assigned drone is ", name)
+    drone_name = database.drone_select(distance)
+    print("assigned drone is ", drone_name)
     Dst = utils.find_closeset_coordinate(Dst,SV_nodes)
     dst_info = database.get_dst(Dst)
     routes = dst_info['trajectories']
-    return {"success": True, "routes" : routes, "name": name, "Dst": Dst}
+    return {"success": True, "routes" : routes, "drone_name": drone_name, "Dst": Dst}
 
 
 @router.post("/generate_MF")
@@ -104,6 +104,26 @@ async def get_drone_gps(request: Request):
     return {"alt": alt, "lat": lat, "lon": lon, "distacne": distance}
 
 
+@router.post("/face_recog_result")
+async def get_face_recog_result(request: Request):
+    data = await request.json()
+    drone_name = data.get('drone_name')
+
+    result = database.get_face_recog_result(drone_name)
+
+    return result
+
+
+@router.post("/face_recog_result_delete")
+async def get_face_recog_result(request: Request):
+    data = await request.json()
+    drone_name = data.get('drone_name')
+
+    database.delete_face_recog_result(drone_name)
+
+    return
+
+
 @router.post('/BC2dst')
 async def BC2dst(request: Request):
     data = await request.json()
@@ -119,8 +139,8 @@ async def BC2dst(request: Request):
     return 
 
 
-@router.post('/face_recog')
-async def face_recog(request: Request):
+@router.post('/face_recog_start')
+async def face_recog_start(request: Request):
     data = await request.json()
     mission_file = data.get('mission_file')
     
@@ -169,6 +189,7 @@ async def dst2BC(request: Request):
 async def drone_stop(request: Request):
     data = await request.json()
     mission_file = data.get('missoin_file')
+
     drone_name = mission_file['drone_name']
     
     # client의 드론 큐에 있는 메시지 비우기
@@ -179,5 +200,17 @@ async def drone_stop(request: Request):
 
 
 
-    
-    
+@router.post('/face_recog_inference')
+async def face_recog_inference(reqeust: Request):
+    data = await reqeust.json()
+
+    tensor = data.get('tensor')
+    drone_name = data.get('drone_name')
+
+    # result = face_recog.inference(tensor)
+    # database.save_face_recog_result(result, drone_name)
+
+    return   
+
+
+
