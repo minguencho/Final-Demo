@@ -70,7 +70,7 @@ class Logging_Consumer():
 
 
 # for drone_control
-class Task_publisher():
+class Task_Publisher():
     
     def __init__(self):
         self.credentials = pika.PlainCredentials('rabbitmq', '1q2w3e4r')

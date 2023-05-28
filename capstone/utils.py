@@ -45,10 +45,10 @@ class Mission_Generator():
     def make_mission(self, routes, user_email, drone_name, altitude, Dstcoordinate, receiver_info, pre_inference_model):
         mission_file = {
             'user_email': user_email,
-            'name': drone_name,
-            'waypoint': routes,
-            'altitude': altitude,
-            'ep_coordinate': Dstcoordinate,
+            'drone_name': drone_name,
+            'way_points': routes,
+            'flight_alt': altitude,
+            'dst_point': Dstcoordinate,
             'pre_inference_model': pre_inference_model,
             'reciever_info': receiver_info 
         }
@@ -67,7 +67,7 @@ class Mission_Splitter():
     def BC2dst(self, mission_file):
         drone_name = mission_file['drone_name']
         way_points = mission_file['way_points']
-        dst_points = mission_file['dst_points']
+        dst_point = mission_file['dst_point']
         flight_alt = mission_file['flight_alt']
         hovering_alt = 3
         # pre_inference_model = mission_file['pre_inference_model']
@@ -82,8 +82,8 @@ class Mission_Splitter():
         for way_point in way_points:
             task_pieces.append({'header': 'goto', 'contents': {'lat': way_point[0], 'lon': way_point[1], 'alt': 0}})
 
-        task_pieces.append({'header': 'goto', 'contents': {'lat': dst_points[0], 'lon': dst_points[1], 'alt': 0}})
-        task_pieces.append({'header': 'goto', 'contents': {'lat': dst_points[0], 'lon': dst_points[1], 'alt': (hovering_alt-flight_alt)}})
+        task_pieces.append({'header': 'goto', 'contents': {'lat': dst_point[0], 'lon': dst_point[1], 'alt': 0}})
+        task_pieces.append({'header': 'goto', 'contents': {'lat': dst_point[0], 'lon': dst_point[1], 'alt': (hovering_alt-flight_alt)}})
         # task_pieces.append({'header': 'face_recognition', 'contents': {'pre_inference_model': pre_inference_model, 'receiver_info': receiver_info}})
 
 

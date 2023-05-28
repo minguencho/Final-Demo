@@ -107,3 +107,18 @@ def get_log(drone_name):
         return log[0]
     else:
         return None
+    
+
+## For face_recog result
+# insert_result
+def save_face_recog_result(result, drone_name):
+    db['Face_Recog_Results'].insert_one({'result': result, 'drone_name': drone_name})
+    return True
+
+def get_face_recog_result(drone_name):
+    result = db['Face_Recog_Results'].find_one({'drone_name': drone_name})['result']
+    return result
+
+def delete_face_recog_result(drone_name):
+    result = db['Face_Recog_Results'].delete_one({'drone_name': drone_name})
+    return result
