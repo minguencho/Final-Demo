@@ -1,7 +1,7 @@
 <html lang='en'>
 <head>
     <meta charset='utf-8' />
-    <title>Capstone - 경로 생성 모듈</title>
+    <title>Capstone</title>
     <meta name='viewport' content='width=device-width, initial-scale=1' />
     <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js'></script>
@@ -120,20 +120,25 @@
 <body>
   <div id = "map-container">
     <div id='map'></div>
+    <div id="layerIDs"></div>
     <button id="select-destination-button">목적지 선택</button>
-    <button id="complete-button">배송 시작</button>
-    <button id="receive-button">수령 완료</button>
+    <button id="complete-button" disabled="True">배송 시작</button>
+    <button id="receive-button" disabled="True">수령 완료</button>
     <div id="overlay">
       <div id ="messagediv">메세지 창</div>
       <div id="chatbox"></div>
       <div class="input-box-container">
         <input type="text" id="input-box" class="input-box" placeholder="메시지 입력">
-        <button onclick="sendMessage()">전송</button>
+        <button id='send_button' onclick="sendMessage()">전송</button>
       </div>
-      
     </div>
   </div>
+
+
+
   <script>
+  var complete_button = document.getElementById('complete-button')
+  var receive_button = document.getElementById('receive-button')
   var BC_latitude = '{{ lat }}'
   var BC_longitude = '{{ lng }}'
   var lngLat
@@ -148,7 +153,9 @@
   var gps_lon
   var distance
   var alt_check_id
+  var user_message
   var recognize_check_id
+  var final_route
   //얼굴 인식 시간
   var recoginize_time = 0
   mapboxgl.accessToken = 'pk.eyJ1IjoibWluZ3VlbmNobyIsImEiOiJjbGdveW1sNjMwaGhuM3NxbTIxdWs1b3N2In0.6Zgzs_gXXFCRY5oVK_Ziww';
@@ -220,14 +227,17 @@
       lngLat = e.lngLat;
       console.log('Clicked at: ' + lngLat.lng + ', ' + lngLat.lat);
       confirmAction();
+      console.log("좌표 선택")
     }
   }
 
   document.getElementById('select-destination-button').addEventListener('click', function() {
+    complete_button.disabled = true;
     if (!isSelectingDefinition) {
       map.getCanvas().style.cursor = 'crosshair';
       isSelectingDefinition = true;
       map.on('click', onMapClick);
+
     }
   });
 
@@ -239,7 +249,8 @@
       },
       body: JSON.stringify({
         drone_name,
-        Dst
+        Dst,
+        final_route
       })
     })
     .then(response => {
@@ -261,7 +272,7 @@
 
   function showDestinationMessage() {
     var chatbox = document.getElementById("chatbox");
-    chatbox.innerHTML += "<p>1.목적지가 선택되었습니다</p>";
+    chatbox.innerHTML += "<p>1. 목적지가 선택되었습니다. 원하는 경로의 숫자를 입력해주세요 !</p>";
     chatbox.scrollTop = chatbox.scrollHeight;
   }
 
@@ -300,6 +311,7 @@
     var chatbox = document.getElementById("chatbox");
     chatbox.innerHTML += "<p>7. 물품을 꺼내고 안전 거리를 확보한 후 수령 완료 버튼을 눌러주세요.</p>";
     chatbox.scrollTop = chatbox.scrollHeight;
+    receive_button.disabled = false;
   }
   function comeback() {
     var chatbox = document.getElementById("chatbox");
@@ -314,7 +326,6 @@
 
       if (confirmation) {
         const data = lngLat;
-
         fetch('/test', {
           method: 'POST',
           headers: {
@@ -344,7 +355,10 @@
             }
             drawRoute(routes_return)
             showDestinationMessage();
+            var button = document.getElementById('send_button')
+            button.addEventListener('click', select_line)
           }
+
         })
         .catch(error => {
           console.error(error);
@@ -363,52 +377,154 @@
       console.log('선택한 좌표값이 없습니다.');
     }
   }
-  function drawRoute(route) {
-    var coordinates = [];
-
-    for (var i = 0; i < route.length; i++) {
-      // 위도와 경도의 순서 변경
-      var link = route[i];
-      node1lat = link[0][0]
-      node1lon = link[0][1]
-      node2lat = link[1][0]
-      node2lon = link[1][1]
-      node1 = [node1lon,node1lat]
-      node2 = [node2lon,node2lat]
-      coordinates.push(node1);
-      coordinates.push(node2);
-    }
-    
-    coordinates = [...new Set(coordinates.map(JSON.stringify))].map(JSON.parse);
-    console.log(coordinates)
-
-    if (map.getLayer("line-layer")) {
-      map.removeLayer("line-layer");
-      console("line already exist, remove")
-    }
-
-    var line = {
-      'type': 'Feature',
-      'geometry': {
-        'type': 'LineString',
-        'coordinates': coordinates
+  function drawRoute(routes){
+    for (var j = 0; j < routes.length; j++) {
+      var layerId = 'line_layer' + j;
+      var symbolId = 'symbol_layer' + j;
+      var routeId = '경로 ' + j;
+      var route = routes[j]
+      console.log(routes)
+      var coordinates = [];
+      for (var i = 0; i < route.length; i++) {
+        // 위도와 경도의 순서 변경
+        var link = route[i];
+        node1lat = link[0][0]
+        node1lon = link[0][1]
+        node2lat = link[1][0]
+        node2lon = link[1][1]
+        node1 = [node1lon,node1lat]
+        node2 = [node2lon,node2lat]
+        coordinates.push(node1);
+        coordinates.push(node2);
       }
-    };
+      console.log("coordinates : ",coordinates)
+      coordinates = [...new Set(coordinates.map(JSON.stringify))].map(JSON.parse);
+      console.log(coordinates)
 
-    new mapboxgl.Marker().setLngLat(coordinates[coordinates.length - 1]).addTo(map);
-    
-    map.addLayer({
-      'id': 'line_layer',
-      'type': 'line',
-      'source': {
-        'type': 'geojson',
-        'data': line
-      },
-      'paint': {
-        'line-color': '#ff0000',
-        'line-width': 4
+
+      var line = {
+        'type': 'Feature',
+        'geometry': {
+          'type': 'LineString',
+          'coordinates': coordinates
+        }
+      };
+
+      new mapboxgl.Marker().setLngLat(coordinates[coordinates.length - 1]).addTo(map);
+      
+      //이미 그려져있는 라인들 지우기
+      // 맵에서 해당 id를 가진 레이어 찾기
+      const existingLayer = map.getLayer(layerId);
+
+      // 레이어가 존재하는 경우 제거하기
+      if (existingLayer) {
+        console.log("remove  : ", layerId )
+        map.removeLayer(layerId);
+        
+        // 레이어에 연결된 이벤트 리스너 제거하기 (선택사항)
+        const existingSource = map.getSource(layerId);
+        if (existingSource) {
+          map.removeSource(layerId);
+        }
       }
-    });
+
+      //이미 그려져있는 심볼들 지우기
+      // 맵에서 해당 id를 가진 레이어 찾기
+      const existing_symbol_Layer = map.getLayer(symbolId);
+
+      // 레이어가 존재하는 경우 제거하기
+      if (existingLayer) {
+        console.log("remove  : ", symbolId )
+        map.removeLayer(symbolId);
+        
+        // 레이어에 연결된 이벤트 리스너 제거하기 (선택사항)
+        const existingSource = map.getSource(symbolId);
+        if (existingSource) {
+          map.removeSource(symbolId);
+        }
+      }
+
+      map.addLayer({
+        'id': layerId,
+        'type': 'line',
+        'source': {
+          'type': 'geojson',
+          'data': line
+        },
+        'paint': {
+          'line-color': '#ff0000',
+          'line-width': 4
+        }
+      });
+      var centerCoord = [(coordinates[0][0] + coordinates[1][0])/2,(coordinates[0][1] + coordinates[1][1])/2]
+      // 심볼 레이어 추가
+      map.addLayer({
+        'id': symbolId,
+        'type': 'symbol',
+        'source': {
+          'type': 'geojson',
+          'data': {
+            'type': 'FeatureCollection',
+            'features': [
+              {
+                'type': 'Feature',
+                'geometry': {
+                  'type': 'Point',
+                  'coordinates': centerCoord
+                },
+                'properties': {
+                  'title': 'Symbol'
+                }
+              }
+            ]
+          }
+        },
+        'layout': {
+          'text-field': routeId,
+          'text-anchor': 'bottom' // 텍스트 위치 지정 (중앙에 표시)
+        }
+      });
+    }
+  }
+  function select_line() {
+    // 맵에서 line 타입의 모든 레이어 찾기
+    select_layerId = 'line_layer' + user_message
+    select_symbolId = 'symbol_layer' + user_message
+    console.log(select_layerId,select_symbolId)
+    for(var i = 0; i < routes_return.length; i++){
+      if (i !== parseInt(user_message)) {
+        linelayer_id = 'line_layer'+i
+        symbollayer_id = 'symbol_layer'+i
+        map.removeLayer(linelayer_id)
+        const existing_line_Source = map.getSource(linelayer_id);
+        if (existing_line_Source) {
+          map.removeSource(linelayer_id);
+        }
+        map.removeLayer(symbollayer_id)
+        const existing_symbol_Source = map.getSource(symbollayer_id);
+        if (existing_symbol_Source) {
+          map.removeSource(symbollayer_id);
+        }
+      }
+    } 
+    final_route = routes_return[user_message]  
+    console.log("final route", final_route)
+    complete_button.disabled = false;
+  }
+
+
+  function sendMessage(){
+    var inputBox = document.getElementById("input-box");
+    var chatLog = document.getElementById("chat-log");
+    
+    user_message = inputBox.value;
+    if (user_message) {
+      var messageElement = document.createElement("p");
+      chatbox.innerHTML += user_message;
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+    console.log(user_message)
+    
   }
 
   // for gps

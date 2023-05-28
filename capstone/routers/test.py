@@ -34,7 +34,7 @@ async def fetch_dst(request: Request):
     print("assigned drone is ", name)
     Dst = utils.find_closeset_coordinate(Dst,SV_nodes)
     dst_info = database.get_dst(Dst)
-    routes = dst_info['trajectories'][0]
+    routes = dst_info['trajectories']
     return {"success": True, "routes" : routes, "name": name, "Dst": Dst}
 
 
@@ -43,6 +43,7 @@ async def generate_MF(request: Request):
     data = await request.json()
     Dst = data.get('Dst')
     drone_name = data.get('drone_name')
+    routes = data.get('final_route')
     
     scheme,_,access_token = request.cookies.get("access_token").partition(" ")
     if access_token is None:
@@ -56,7 +57,6 @@ async def generate_MF(request: Request):
     
     dst_info = database.get_dst(Dst)
     
-    routes = dst_info['trajectories'][0]
     altitude = dst_info['altitude']
     Dst = dst_info['Dst coordinate']
     
@@ -100,6 +100,7 @@ async def get_drone_gps(request: Request):
     distance = utils.distance_calc(source, dst)
     
     return {"alt": alt, "lat": lat, "lon": lon, "distacne": distance}
+
 
 @router.post("/recognize")
 async def get_drone_gps(request: Request):

@@ -74,7 +74,10 @@ def get_service_waypoint():
 
 def get_dst(Dstcoordinate):
     dst_info = db['paths'].find_one({'Dst coordinate': Dstcoordinate})
-    
+    return dst_info
+
+def get_route(Dst):
+    dst_info = db['paths'].find_one({'Dst coordinate': Dst})['trajectories']
     return dst_info
 
 
