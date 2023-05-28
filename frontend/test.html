@@ -258,9 +258,9 @@
       return response.json();
     })
     .then(data => {
-      var MF = {}
-      MF = data.mission_file
-      console.log(MF);
+      
+      mission_file = data.mission_file
+
       
     })
     .catch(error => console.error(error));

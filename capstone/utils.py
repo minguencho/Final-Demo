@@ -64,15 +64,15 @@ class Mission_Splitter():
         return
     
 
-    def mission_split(self, mission_file):
-        
+    def BC2dst(self, mission_file):
         drone_name = mission_file['drone_name']
         way_points = mission_file['way_points']
         dst_points = mission_file['dst_points']
         flight_alt = mission_file['flight_alt']
-        hovering_alt = 2.5
-        pre_inference_model = mission_file['pre_inference_model']
-        receiver_info = mission_file['receiver_info']
+        hovering_alt = 3
+        # pre_inference_model = mission_file['pre_inference_model']
+        # receiver_info = mission_file['receiver_info']
+        
         
         task_pieces = []
         
@@ -80,21 +80,57 @@ class Mission_Splitter():
         task_pieces.append({'header': 'takeoff', 'contents': {'alt': flight_alt}})
         
         for way_point in way_points:
-            # 도착지점이 아닐 경우
-            if way_point != dst_points:
-                task_pieces.append({'header': 'goto', 'contents': {'lat': way_point[0], 'lon': way_point[1], 'alt': flight_alt}})
-            # 도착지점일 경우
-            else:
-                task_pieces.append({'header': 'goto', 'contents': {'lat': way_point[0], 'lon': way_point[1], 'alt': flight_alt}})
-                task_pieces.append({'header': 'goto', 'contents': {'lat': way_point[0], 'lon': way_point[1], 'alt': hovering_alt}})
-                task_pieces.append({'header': 'face_recognition', 'contents': {'pre_inference_model': pre_inference_model, 'receiver_info': receiver_info}})
-                task_pieces.append({'header': 'landing', 'contents': {}})
-                task_pieces.append({'header': 'arm', 'contents': {}})
-                task_pieces.append({'header': 'takeoff', 'contents': {'alt': flight_alt}})
-                
-        # 복귀지점 상공 도착
+            task_pieces.append({'header': 'goto', 'contents': {'lat': way_point[0], 'lon': way_point[1], 'alt': 0}})
+
+        task_pieces.append({'header': 'goto', 'contents': {'lat': dst_points[0], 'lon': dst_points[1], 'alt': 0}})
+        task_pieces.append({'header': 'goto', 'contents': {'lat': dst_points[0], 'lon': dst_points[1], 'alt': (hovering_alt-flight_alt)}})
+        # task_pieces.append({'header': 'face_recognition', 'contents': {'pre_inference_model': pre_inference_model, 'receiver_info': receiver_info}})
+
+
+        return drone_name, task_pieces
+    
+    
+    def dst2BC(self, mission_file):
+        drone_name = mission_file['drone_name']
+        way_points = mission_file['way_points'].reverse()
+        BC_points = way_points[-1]
+        flight_alt = mission_file['flight_alt']
+        
+        
+        task_pieces = []
+        
+        task_pieces.append({'header': 'arm', 'contents': {}})
+        task_pieces.append({'header': 'takeoff', 'contents': {'alt': flight_alt}})
+        
+        for way_point in way_points:
+            task_pieces.append({'header': 'goto', 'contents': {'lat': way_point[0], 'lon': way_point[1], 'alt': 0}})
+
+        task_pieces.append({'header': 'goto', 'contents': {'lat': BC_points[0], 'lon': BC_points[1], 'alt': 0}})
         task_pieces.append({'header': 'landing', 'contents': {}})
-        task_pieces.append({'header': 'disarm', 'contents': {}})
-
-
+        
+        
+        return drone_name, task_pieces
+    
+    
+    def land_current_position(self, mission_file):
+        drone_name = mission_file['drone_name']
+        
+        task_pieces = []
+        
+        task_pieces.append({'header': 'landing', 'contents': {}})
+        
+        
+        return drone_name, task_pieces
+    
+    
+    def face_recog(self, mission_file):
+        drone_name = mission_file['drone_name']
+        pre_inference_model = mission_file['pre_inference_model']
+        receiver_info = mission_file['receiver_info']
+        
+        task_pieces = []
+        
+        task_pieces.append({'header': 'face_recognition', 'contents': {'pre_inference_model': pre_inference_model, 'receiver_info': receiver_info}})
+        
+        
         return drone_name, task_pieces

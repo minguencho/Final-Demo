@@ -14,15 +14,6 @@ channel = connection.channel()
 channel.exchange_declare(exchange='input', exchange_type='direct')
 channel.exchange_declare(exchange='output', exchange_type='direct')
 
-
-
-def publish(message, exchange_name, routing_key_name):
-    channel.basic_publish(
-        exchange=exchange_name,
-        routing_key=routing_key_name,
-        body=pickle.dumps(message)
-    )
-    return True
     
 
 # when user create -> user's exchange also create
@@ -42,23 +33,59 @@ def rm_queue_message(queue_name):
 
 
 
-
-
-class Result_Saver():
+# for mongodb consumer -> save GPS info
+class Logging_Consumer():
+    
     def __init__(self):
-        self.queue_name = 'MongoDB'
-        channel.queue_declare(self.queue_name)
-        channel.queue_bind(exchange='output', queue=self.queue_name, routing_key='toMongoDB')
+        self.credentials = pika.PlainCredentials('rabbitmq', '1q2w3e4r')
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_SERVER_IP, RABBITMQ_SERVER_PORT, 'vhost', self.credentials))
+        self.channel = self.connection.channel()
 
-
-    def callback(self, ch, method, properties, body):
-        message = pickle.loads(body, encoding='bytes')
-        database.insert_result(message)
-        print('[MongoDB] Result Saved')
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        self.my_name = '[Logging_Consumer]'
         
+        self.exchange_name = 'monitoring'
+        self.queue_name = 'log_queue'
+
+        # Queue 선언
+        queue = self.channel.queue_declare(self.queue_name)
+        # Exchange 선언
+        self.channel.exchange_declare(self.exchange_name)
+        # Queue-Exchange Binding
+        self.channel.queue_bind(exchange=self.exchange_name, queue=self.queue_name, routing_key=f'to{self.queue_name}')
+
+    
+    def callback(self, ch, method, properties, body):
+        log = pickle.loads(body, encoding='bytes')
+        database.insert_log(log)
+        print(f'{self.my_name} Log_info : ', log)
+        
+        ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def consume(self):
-        channel.basic_consume(on_message_callback=self.callback, queue=self.queue_name)
-        print('[MongoDB] Start Consuming')
-        channel.start_consuming()
+        self.channel.basic_qos(prefetch_count=1)
+        self.channel.basic_consume(on_message_callback=self.callback, queue=self.queue_name)
+        print(f'{self.my_name} Start Consuming')
+        self.channel.start_consuming()
+
+
+
+# for drone_control
+class Task_publisher():
+    
+    def __init__(self):
+        self.credentials = pika.PlainCredentials('rabbitmq', '1q2w3e4r')
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_SERVER_IP, RABBITMQ_SERVER_PORT, 'vhost', self.credentials))
+        self.channel = self.connection.channel()
+        
+        self.exchange_name = 'input'
+
+    
+    def publish_list(self, messages, drone_name):
+        
+        for message in messages:
+            self.channel.basic_publish(
+                exchange=self.exchange_name,
+                routing_key=f'to{drone_name}',
+                body=pickle.dumps(message)
+            )
+        return True

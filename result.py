@@ -1,5 +1,5 @@
-from capstone.rabbitmq import Result_Saver
+from capstone.rabbitmq import Logging_Consumer
 
-Mongo = Result_Saver()
+Mongo = Logging_Consumer()
 
 Mongo.consume()
