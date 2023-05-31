@@ -96,16 +96,26 @@ def update_receiver_info(email,receiver_info):
 
 ## For Monitoring 
 # insert log
-def insert_log(log):
+def insert_log(log, drone_name):
+    # insert_log
     db['Logs'].insert_one(log)
+    # print('insert create_at : ', log['create_at'])
+    
+    # if log_count over 5, delete oldest log
+    count = db['Logs'].count_documents({'drone_name': drone_name})
+    if count >= 5:
+        oldest_log = db['Logs'].find({'drone_name': drone_name}).sort('create_at', 1).limit(1)
+        # print('remove_create_at : ', oldest_log[0]['create_at'])
+        db['Logs'].delete_one(oldest_log[0])
+        
     return True
 
 # get log
 def get_log(drone_name):
-    log = db['Logs'].find({'drone_name': drone_name}).sort("create_at", -1).limit(1)
-    if log.count() > 0:
+    try:
+        log = db['Logs'].find({'drone_name': drone_name}).sort("create_at", -1).limit(1)
         return log[0]
-    else:
+    except:
         return None
     
 
@@ -116,8 +126,11 @@ def save_face_recog_result(result, drone_name):
     return True
 
 def get_face_recog_result(drone_name):
-    result = db['Face_Recog_Results'].find_one({'drone_name': drone_name})['result']
-    return result
+    try:
+        result = db['Face_Recog_Results'].find_one({'drone_name': drone_name})['result']
+        return result
+    except:
+        return None
 
 def delete_face_recog_result(drone_name):
     result = db['Face_Recog_Results'].delete_one({'drone_name': drone_name})

@@ -43,10 +43,11 @@ class Mission_Generator():
         return
     
     def make_mission(self, routes, user_email, drone_name, altitude, Dstcoordinate, receiver_info, pre_inference_model):
+        way_points = self.extract_waypoints(routes)
         mission_file = {
             'user_email': user_email,
             'drone_name': drone_name,
-            'way_points': routes,
+            'way_points': way_points,
             'flight_alt': altitude,
             'dst_point': Dstcoordinate,
             'pre_inference_model': pre_inference_model,
@@ -55,6 +56,17 @@ class Mission_Generator():
         
         return mission_file
     
+    
+    def extract_waypoints(self, routes):
+        waypoints = []
+        for sublist in routes:
+            for coordinates in sublist:
+                waypoints.append(coordinates)
+                
+        waypoints = list(dict.fromkeys(tuple(wp) for wp in waypoints))
+        
+        return waypoints
+        
     
     
 class Mission_Splitter():

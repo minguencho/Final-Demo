@@ -56,8 +56,9 @@ class Logging_Consumer():
     
     def callback(self, ch, method, properties, body):
         log = pickle.loads(body, encoding='bytes')
-        database.insert_log(log)
-        print(f'{self.my_name} Log_info : ', log)
+        drone_name = log['drone_name']
+        database.insert_log(log, drone_name)
+        # print(f'{self.my_name} Log_info : ', log)
         
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
