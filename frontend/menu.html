@@ -1,0 +1,75 @@
+<html>
+    <head>
+        <title>SmartQ - 메뉴</title>
+    </head>
+    <style>
+        body {padding: auto; margin: auto;}
+        h2{
+            position: relative;
+            margin: auto;
+            border-style: solid;
+            align-items: center;
+            width: 50%;
+            height: auto;
+            text-align: center;
+        }
+        #divPosition{
+            margin: 100px auto;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        #Logoutdiv {
+            display: flex;
+            position: relative;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 60%;
+        }
+
+        #menuButtons {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 60%;
+        }
+      
+
+       button.button{
+            margin: 5%;
+            width: 100%;
+            height: 15%;
+            border: 0;
+            font-size: 20px;
+            font-weight: 600;
+            border-radius: 10px;
+            }
+
+        button.logout{
+            position: relative;
+            left: 130px;
+            width: 17%;
+            border: 0;
+            font-size: 15px;
+            flex-direction: column;
+            align-items: center;
+            font-weight: 600;
+            margin-left: 30px;
+            border-radius: 10px;
+        }
+    </style>
+    <body>
+        <div id = "divPosition">
+            <h2>MENU</h2>
+            <div id = "menuButtons">
+                <button class = "button" onclick  = "location.href = 'http://203.255.57.122:8888/map/'">Map</button>
+            </div>
+            <button class = "logout" onclick  = "location.href = 'http://203.255.57.122:8888/'">Logout</button>
+        </div>
+        
+    </body>
+</html>
