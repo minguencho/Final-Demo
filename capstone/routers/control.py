@@ -48,7 +48,7 @@ async def drone_land(request: Request):
     mission_splitter = utils.Mission_Splitter()
     task_publisher = rabbitmq.Task_Publisher()
     
-    drone_name, task_pieces = mission_splitter.land_current_position(mission_file)
+    drone_name, task_pieces = mission_splitter.dst2BC(mission_file)
     task_publisher.publish_list(task_pieces, drone_name)
     
     
